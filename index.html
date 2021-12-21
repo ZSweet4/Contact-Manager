@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Contact Manager</title>
+
+<link rel="stylesheet" href="primitive.css">
+<style id=stuff>
+input:invalid {
+  background-color:pink;
+}
+
+input:valid {
+  background-color:lightGreen;
+}
+label {
+	display: block;
+}
+
+
+label > span {
+	display: inline-block;
+	width: 250px;
+	line-height: 35px;
+	vertical-align: top;
+}
+</style>
+</head>
+<body>
+  <!-- 1-30 Sets the doctype and does some css stuff to make the document a little nicer -->
+	<header>
+		<h1>Contact Manager</h1>
+	</header>
+  <section>
+    <article id="formcontacts">
+      <details>
+        <summary>
+          Click to open the form
+        </summary>
+			<form onsubmit="return submitForm();">
+				<fieldset>
+					<legend>New Contact:</legend>
+          <label for="firstName">
+						<span>First name:</span>
+						<input type="" name="firstName" id="firstName" maxlength="32" required >
+					</label>
+					<label for="name">
+						<span>Last name:</span>
+						<input type="text" name="lastName" id="lastName" maxlength="32" required >
+					</label>
+          <label for="phone">
+						<span>Phone:</span>
+            <input type="text" name="phone" id="phone" maxlength="10" pattern="[1-9]{1}[0-9]{9}" required >
+					</label>
+          <label for="email">
+            <span>Email:</span>
+            <input type="email" name="email" id="email" maxlength="32" required>
+          </label>
+          <label for="birth">
+            <span>Birth Date:</span>
+            <input type="date" name="birth" id="birth" maxlength="32" required>
+          </label>
+				</fieldset>
+				<button id="addClient" type="submit">OK</button>
+			</form>	
+      <!-- 31-66 sets the lables for the form and then sets the ok buttion so that you can make a contact -->
+      </details>
+    </article>
+	<article id="contacts">
+		<header>
+			<h2>Saved Contacts</h2>
+		</header>
+			<table>
+				<thead>
+					<tr>
+						<th>First name</th>
+						<th>Last name</th>
+            <th>Phone Number</th>
+            <th>Email</th>
+            <th>Birth Date</th>
+					</tr>
+				</thead>
+				<tbody id="tablecontactBody">
+				</tbody>
+			</table>
+			<button id="contactreset" onclick="resetContact()">Reset Contacts</button>
+	</article>
+    </section>
+<!-- 67-88 creates a table for the things that the user has to enter and the sets the table ID -->
+<script id="contacts-javascript">
+// Different elements from the form in the HTML page
+var contactForm, firstNameField, lastNameField, phoneField, emailField, birthField;
+
+// Array of colors to save/load to/from localStorage
+var contacts = [];
+
+var textMessageInvalid = "This field contains invalid characters";
+
+window.addEventListener("load", function() {
+  // called when the page has been entirely loaded
+  
+  // the form element
+  contactForm = document.forms[0]; 
+  
+  // get the fields elements
+  firstNameField = contactForm.firstName;
+  lastNameField = contactForm.lastName;
+  phoneField = contactForm.phone;
+  emailField = contactForm.email;
+  birthField = contactForm.birth;
+  
+  // read colors from localStorag
+  contacts = getcontacts();
+  
+  // Builds and display the table of colors
+  buildcontactTable(contacts);
+  
+
+  // Listener for input events on the two text fields. Check for
+  // invalid charcters %, &, $, ! that are forbidden.
+  lastNameField.oninput = firstNameField.oninput = function() {
+	if (this.value.match(/[0123456789%&$!/]/)) {
+		this.setCustomValidity(textMessageInvalid);
+	} else {
+		this.setCustomValidity("");
+	}
+}
+phoneField.oninput = function(){
+  if(this.value.match(/[[1-9]{1}[0-9]{9}]/)){
+    this.setCustomValidity(textMessageInvalid);
+  } else{
+    this.setCustomValidity("");
+  }
+}
+/*
+phoneField.oninput = function(){
+  if(this.value.match(/^\d{10}$/)) {
+    this.setCustomValidity(textMessageInvalid);
+  } else{
+    this.setCustomValidity("");
+  }
+}*/
+birthField.oninput = function(){
+  if(this.value.match(/^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/)){
+    this.setCustomValidity(textMessageInvalid);
+  }else{
+    this.setCustomValidity("");
+  }
+};
+})
+// 92-144 sets the variables that you get from the form and then then makes an array called contacts to put those variables in
+// Called when the form is submitted
+function submitForm() {
+  // When we execute this function, the form has already been validated
+  // by the HTML5 built-in validation system (bubbles etc.)
+  console.log("We are saving the current contact in the form");
+  
+  // Create a new color JavaScript object with the current values
+  // in the form inoput fields
+ var contact = {};
+  contact.firstName = firstNameField.value;
+  contact.lastName = lastNameField.value;
+  contact.phone = phoneField.value;
+  contact.email = emailField.value;
+  contact.birth = birthField.value; 
+  
+  // Add the color in the array of colors
+  contacts.push(contact);
+  
+  // Save the array of colors in JSON format
+  localStorage.contacts = JSON.stringify(contacts); 
+  
+  // Update the HTML table with the new color at the end
+  addLineToHTMLTable(contact);
+  
+  // do not submit the form using HTTP, return false prevents this
+  // submission
+  return false;
+} 
+  
+function buildcontactTable(contacts) {
+	var rowIndex, row;
+		
+	// iterate on the color array passed as parameter
+	for (rowIndex = 0; rowIndex < contacts.length; rowIndex++) {		
+		// Add a line in the HTML table for the current color
+		addLineToHTMLTable(contacts[rowIndex]);
+	}
+}
+
+// Add a line to the HTML table, corresponding to the color
+// passed as parameter
+function addLineToHTMLTable(contact) {
+  	var row, firstNameColumn, lastNameColumn, phoneColumn, emailColumn, birthColumn;
+  
+    var tableBody = document.getElementById("tablecontactBody");
+	
+    // create a table row element and all tds inside for the diffent
+    // color properties
+	row = document.createElement("tr");
+	firstNameColumn = document.createElement("td");
+	lastNameColumn = document.createElement("td");
+  phoneColumn = document.createElement("td");
+  emailColumn = document.createElement("td");
+  birthColumn = document.createElement("td");
+		
+	// fill the tds
+  firstNameColumn.innerHTML = contact.firstName;
+	lastNameColumn.innerHTML = contact.lastName;
+	phoneColumn.innerHTML = contact.phone;
+  emailColumn.innerHTML = contact.email;
+  birthColumn.innerHTML = contact.birth;
+				
+	// Adds tds to the row		
+  row.appendChild(firstNameColumn);
+	row.appendChild(lastNameColumn);
+  row.appendChild(phoneColumn);
+  row.appendChild(emailColumn);
+  row.appendChild(birthColumn);
+  
+    // add row to the table body
+    tableBody.appendChild(row);
+}
+
+// Read colors from localStorage
+function getcontacts() {
+	var contacts = localStorage.contacts;
+	if (contacts) {
+		return JSON.parse(contacts);
+	} else {
+		return [];
+	}
+}
+
+// Reset color list from localStorage
+function resetContact() {  
+    localStorage.clear();
+    location.reload();
+}
+
+</script>
+</body>
+</html>
+<!-- Zachary Sweet
+  10/28/2021 -->
